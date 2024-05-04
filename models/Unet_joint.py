@@ -90,27 +90,27 @@ class unet_model(nn.Module):
         y =  self.cnn1(x)
         # print(y.shape)
         y = self.maxpool1(y)
-        layer1 = y
+        # layer1 = y
         # print(y.shape)
         y = self.cnn2(y)
         # print(y.shape)
         y = self.maxpool2(y)
         # print(y.shape)
-        layer2 = y
+        # layer2 = y
         y = self.cnn3(y)
         # print(y.shape)
         y = self.maxpool3(y)
 
-        layer3 = y
+        # layer3 = y
         y = self.cnn4(y)
         # print(y.shape)
         y = self.maxpool4(y)
-        layer4 = y
+        # layer4 = y
         y = self.cnn5(y)
         # print(y.shape)
         y = self.maxpool5(y)
 
-        layer5 = y
+        # layer5 = y
         # print(y.shape)
         y = y.view(y.size(0),-1)
         y = self.fc1(y)
