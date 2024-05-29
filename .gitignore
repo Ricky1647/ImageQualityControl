@@ -1,2 +1,2 @@
-./checkpoint/*
-./models/__pycache__/*
+checkpoint/*
+models/__pycache__/*
