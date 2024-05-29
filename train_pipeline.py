@@ -15,7 +15,7 @@ import torch.nn as nn
 from torch.optim import Adam
 from tqdm import tqdm
 
-from dataset import SpineDataset
+from dataset import SpineDataset_Pipeline
 from models.Unet_joint import unet_model
 from models.anxialnet import axial50l
 from models.U2net import U2NET
@@ -25,11 +25,14 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 def test(model, test_loader, device=DEVICE):
     model.eval()
     iou_score = 0.0
+    acc = 0
     with torch.no_grad(): 
         outputs = np.zeros((len(test_loader), 1024, 512))
         masks = np.zeros((len(test_loader), 1024, 512))
         idx = 0
+        total = 0
         for data, target ,weight, qualified in test_loader:
+            total += len(qualified)
             softmax = nn.Softmax(dim=1)
             data, target = data.float().to(device), target.to(device)
             target = target.type(torch.long)
@@ -41,11 +44,15 @@ def test(model, test_loader, device=DEVICE):
             outputs[idx, :, :] = output[0]
             masks[idx, :, :] = target[0]
             idx += 1
-            _, test_pred = torch.max(outputs, 1)
-            print(test_pred)
+            _, test_pred = torch.max(y, 1)
+            test_pred = test_pred.cpu().detach().numpy()
+            qualified = qualified.detach().numpy()
+            acc += (sum(test_pred==qualified))
+        acc = acc/total
         iou_score = mean_iou_score(outputs, masks)
 
     print("\n[Testing] mIoU:{:.4f}".format(iou_score))
+    print("\n[Testing] Acc :{:.4f}".format(acc))
     return iou_score
 def mean_iou_score(pred, labels):
     '''
@@ -123,22 +130,22 @@ if __name__ == "__main__":
     with open("./test_data.txt")as f:
         test_path = f.read().splitlines()
     #train_batch,test_batch = get_images(img_path,transform=t1,batch_size=4)
-    training_data = SpineDataset(train_path,t1)
-    training_data_flip = SpineDataset(train_path,t2)
-    # training_data_center = SpineDataset(train_path,t3)
-    training_data_rotate = SpineDataset(train_path,t4)
-    training_data_a1 = SpineDataset(train_path,t5)
-    training_data_a2 = SpineDataset(train_path,t6)
-    training_data_a3 = SpineDataset(train_path,t7)
-    training_data_a4 = SpineDataset(train_path,t8)
+    training_data = SpineDataset_Pipeline(train_path,t1)
+    training_data_flip = SpineDataset_Pipeline(train_path,t2)
+    # training_data_center = SpineDataset_Pipeline(train_path,t3)
+    training_data_rotate = SpineDataset_Pipeline(train_path,t4)
+    training_data_a1 = SpineDataset_Pipeline(train_path,t5)
+    training_data_a2 = SpineDataset_Pipeline(train_path,t6)
+    training_data_a3 = SpineDataset_Pipeline(train_path,t7)
+    training_data_a4 = SpineDataset_Pipeline(train_path,t8)
 
 
     train_set = ConcatDataset([training_data,training_data_flip,training_data_rotate, training_data_a1, training_data_a2, training_data_a3, training_data_a4])
 
-    testing_data = SpineDataset(test_path,t1)
+    testing_data = SpineDataset_Pipeline(test_path,t1)
 
-    train_batch = DataLoader(train_set, batch_size=4, shuffle=True,num_workers=8)
-    test_batch = DataLoader(testing_data,batch_size=4,shuffle=True,num_workers=8)
+    train_batch = DataLoader(train_set, batch_size=8, shuffle=True,num_workers=8)
+    test_batch = DataLoader(testing_data,batch_size=8,shuffle=True,num_workers=8)
 
     model = unet_model().to(DEVICE)
     #model = axial50l().to(DEVICE)
@@ -147,7 +154,7 @@ if __name__ == "__main__":
     num_epochs = 9000
     alpha = 0.95
     loss_fn = nn.CrossEntropyLoss()
-    # model.load_state_dict(torch.load("checkpoint/unet_b_226/best_resnetlarge.ckpt"))
+    # model.load_state_dict(torch.load("checkpoint/joint0504/best_resnetlarge.ckpt"))
     optimizer = Adam(model.parameters(), lr=LEARNING_RATE)
     # optimizer.load_state_dict(torch.load("./checkpoint/unet/optimizer.ckpt"))
     scaler = torch.cuda.amp.GradScaler()
@@ -183,10 +190,7 @@ if __name__ == "__main__":
                 loss = -1*weighted_loss
                 loss =loss.mean()
                 loss_q = loss_fn(predict_qualified, qualified.to(DEVICE))
-                if(num_epochs <= 300):
-                    loss = loss*alpha + loss_q * (1 - alpha)
-                else: 
-                    loss = (loss+loss_q)/2
+                loss = (loss+loss_q)/2
 
             # backward
             optimizer.zero_grad()
