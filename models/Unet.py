@@ -28,7 +28,7 @@ class encoding_block(nn.Module):
         return self.conv(x)    
     
 class unet_model(nn.Module):
-    def __init__(self,out_channels=9,features=[64, 128, 256, 512]):
+    def __init__(self,out_channels=7,features=[64, 128, 256, 512]):
         super(unet_model,self).__init__()
         self.pool = nn.MaxPool2d(kernel_size=(2,2),stride=(2,2))
         self.conv1 = encoding_block(1,features[0])
@@ -45,17 +45,6 @@ class unet_model(nn.Module):
         self.tconv4 = nn.ConvTranspose2d(features[-3], features[-4], kernel_size=2, stride=2)        
         self.bottleneck = encoding_block(features[3],features[3]*2)
         self.final_layer = nn.Conv2d(features[0],out_channels,kernel_size=1)
-        self.cnn1 =  nn.Conv2d(out_channels, 16,kernel_size=5,padding=2)
-        self.maxpool1 = nn.MaxPool2d(kernel_size=2)
-        self.cnn2 =  nn.Conv2d(16, 32,kernel_size=5,padding=2)
-        self.maxpool2 = nn.MaxPool2d(kernel_size=2)
-        self.cnn3 =  nn.Conv2d(32, 64,kernel_size=5,padding=2)
-        self.maxpool3 = nn.MaxPool2d(kernel_size=2)
-        self.cnn4 =  nn.Conv2d(64, 128,kernel_size=5,padding=2)
-        self.maxpool4 = nn.MaxPool2d(kernel_size=2)
-        self.cnn5 =  nn.Conv2d(128, 256,kernel_size=5,padding=2)
-        self.maxpool5 = nn.MaxPool2d(kernel_size=2)
-        self.fc1 = nn.Linear(256*32*16,2)
     def forward(self,x):
         skip_connections = []
         # print(x.shape)

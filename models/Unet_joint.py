@@ -28,7 +28,7 @@ class encoding_block(nn.Module):
         return self.conv(x)    
     
 class unet_model(nn.Module):
-    def __init__(self,out_channels=9,features=[64, 128, 256, 512]):
+    def __init__(self,out_channels=7,features=[64, 128, 256, 512]):
         super(unet_model,self).__init__()
         self.pool = nn.MaxPool2d(kernel_size=(2,2),stride=(2,2))
         self.conv1 = encoding_block(1,features[0])
@@ -119,6 +119,7 @@ class unet_model(nn.Module):
         return x,y
     
 
+
 class Encoder(nn.Module):
     def __init__(self):
         super(Encoder, self).__init__()
@@ -164,3 +165,54 @@ class AutoEncoder(nn.Module):
             codes = self.encoder(inputs)
             decoded = self.decoder(codes)
             return codes, decoded
+
+
+
+class ImageQualityClassifier(nn.Module):
+    def __init__(self, in_channels = 7):
+        super(ImageQualityClassifier, self).__init__()
+        self.cnn1 =  nn.Sequential( 
+            nn.Conv2d(in_channels, 16,kernel_size=5,padding=2),
+            nn.BatchNorm2d(16),
+            nn.ReLU(),
+        )
+        self.maxpool1 = nn.MaxPool2d(kernel_size=2)
+        self.cnn2 =nn.Sequential( 
+            nn.Conv2d(16, 32,kernel_size=5,padding=2),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+        )
+        self.maxpool2 = nn.MaxPool2d(kernel_size=2)
+        self.cnn3 = nn.Sequential(
+            nn.Conv2d(32, 64,kernel_size=5,padding=2),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+        )
+        self.maxpool3 = nn.MaxPool2d(kernel_size=2)
+        self.cnn4 = nn.Sequential( 
+            nn.Conv2d(64, 128,kernel_size=5,padding=2),
+            nn.BatchNorm2d(128),
+            nn.ReLU(),
+        )
+        self.maxpool4 = nn.MaxPool2d(kernel_size=2)
+        self.cnn5 = nn.Sequential( 
+            nn.Conv2d(128, 256,kernel_size=5,padding=2),
+            nn.BatchNorm2d(256),
+            nn.ReLU(),
+        )
+        self.maxpool5 = nn.MaxPool2d(kernel_size=2)
+        self.fc1 = nn.Linear(256*32*16,2)        
+    def forward(self,x):
+        y =  self.cnn1(x)
+        y = self.maxpool1(y)
+        y = self.cnn2(y)
+        y = self.maxpool2(y)
+        y = self.cnn3(y)
+        y = self.maxpool3(y)
+        y = self.cnn4(y)
+        y = self.maxpool4(y)
+        y = self.cnn5(y)
+        y = self.maxpool5(y)
+        y = y.view(y.size(0),-1)
+        y = self.fc1(y)
+        return y
