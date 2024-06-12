@@ -13,8 +13,8 @@ class SpineDataset(Dataset):
     def __len__(self):
         return len(self.img_path)
     def __getitem__(self,index):
-        img = np.array(Image.open(f"./dataset/{self.img_path[index]}/img.png"))
-        mask = np.array(Image.open(f"./dataset/{self.img_path[index]}/label.png"))
+        img = np.array(Image.open(f"./dataset_json_refilt/{self.img_path[index]}/img.png"))
+        mask = np.array(Image.open(f"./dataset_json_refilt/{self.img_path[index]}/label.png"))
         # with open("qualified.json") as f :
         #     qualified = json.load(f)
         if self.transforms is not None:
@@ -57,8 +57,8 @@ class SpineDataset_Pipeline(Dataset):
     def __len__(self):
         return len(self.img_path)
     def __getitem__(self,index):
-        img = np.array(Image.open(f"../xray-seg_2_15/dataset/{self.img_path[index]}/img.png"))
-        mask = np.array(Image.open(f"../xray-seg_2_15/dataset/{self.img_path[index]}/label.png"))
+        img = np.array(Image.open(f"./dataset/{self.img_path[index]}/img.png"))
+        mask = np.array(Image.open(f"./dataset/{self.img_path[index]}/label.png"))
         with open("qualified.json") as f :
             qualified = json.load(f)
         if self.transforms is not None:
