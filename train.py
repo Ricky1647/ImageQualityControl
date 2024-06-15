@@ -13,7 +13,7 @@ import torch.nn.functional as F
 import torch.nn as nn
 from torch.optim import Adam
 from tqdm import tqdm
-
+import os
 from dataset import SpineDataset
 from models.Unet import unet_model
 from models.Unet import AutoEncoder
@@ -76,6 +76,8 @@ def mean_iou_score(pred, labels):
     return mean_iou
 
 if __name__ == "__main__":
+    if not os.path.exists(f"./checkpoint/{args.directory}"):
+        os.makedirs(f"./checkpoint/{args.directory}")
     t1 = A.Compose([
         A.Resize(1024,512),
         ToTensorV2()
