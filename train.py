@@ -22,6 +22,13 @@ from models.U2net import U2NET
 import sys
 gpu_index = sys.argv[1]
 DEVICE = f"cuda:{gpu_index}" if torch.cuda.is_available() else "cpu"
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("-i", "--train", help = "the input file for training")
+parser.add_argument("-g", "--test", help = "the input  file for testing")
+parser.add_argument("-d", "--directory", help = "the directory to store checkpoint")
+parser.add_argument("-c", "--channel", type = int, help = "the unet channel for different dataset")
+args = parser.parse_args()
 
 def test(model, test_loader, device=DEVICE):
     model.eval()
@@ -117,29 +124,29 @@ if __name__ == "__main__":
             ToTensorV2()
         ]
     )
-    with open("./train_data_filter.txt")as f:
+    with open(args.train)as f:
         train_path = f.read().splitlines()
-    with open("./test_data_filter.txt")as f:
+    with open(args.test)as f:
         test_path = f.read().splitlines()
     #train_batch,test_batch = get_images(img_path,transform=t1,batch_size=4)
-    training_data = SpineDataset(train_path,t1)
-    training_data_flip = SpineDataset(train_path,t2)
-    # training_data_center = SpineDataset(train_path,t3)
-    training_data_rotate = SpineDataset(train_path,t4)
-    training_data_a1 = SpineDataset(train_path,t5)
-    training_data_a2 = SpineDataset(train_path,t6)
-    training_data_a3 = SpineDataset(train_path,t7)
-    training_data_a4 = SpineDataset(train_path,t8)
+    training_data = SpineDataset("./dataset",train_path,t1)
+    training_data_flip = SpineDataset("./dataset",train_path,t2)
+    # training_data_center = SpineDataset("./dataset",train_path,t3)
+    training_data_rotate = SpineDataset("./dataset",train_path,t4)
+    training_data_a1 = SpineDataset("./dataset",train_path,t5)
+    training_data_a2 = SpineDataset("./dataset",train_path,t6)
+    training_data_a3 = SpineDataset("./dataset",train_path,t7)
+    training_data_a4 = SpineDataset("./dataset",train_path,t8)
 
 
     train_set = ConcatDataset([training_data,training_data_flip,training_data_rotate, training_data_a1, training_data_a2, training_data_a3, training_data_a4])
 
-    testing_data = SpineDataset(test_path,t1)
+    testing_data = SpineDataset("./dataset",test_path,t1)
 
     train_batch = DataLoader(train_set, batch_size=6, shuffle=True,num_workers=8)
     test_batch = DataLoader(testing_data,batch_size=6,shuffle=True,num_workers=8)
 
-    model = unet_model(out_channels=4).to(DEVICE)
+    model = unet_model(out_channels = args.channel).to(DEVICE)
     #model = axial50l().to(DEVICE)
     # model  = U2NET().to(DEVICE)
     LEARNING_RATE = 1e-4
@@ -194,7 +201,7 @@ if __name__ == "__main__":
         if acc > best_acc:
             best_acc = acc
             print("Saving best model... Best Acc is: {:.4f}".format(best_acc))
-            torch.save(model.state_dict(), f"./checkpoint/0611/best_resnetlarge.ckpt")
+            torch.save(model.state_dict(), f"{args.directory}/best_resnetlarge.ckpt")
             if acc>0.95:
-                torch.save(model.state_dict(), f"./checkpoint/0611/{acc}_best_resnetlarge_{acc}.ckpt")
-        torch.save(optimizer.state_dict(), f"./checkpoint/0611/optimizer.ckpt")
+                torch.save(model.state_dict(), f"{args.directory}/{acc}_best_resnetlarge_{acc}.ckpt")
+        torch.save(optimizer.state_dict(), f"{args.directory}/optimizer.ckpt")

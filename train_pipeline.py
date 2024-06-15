@@ -19,6 +19,11 @@ from dataset import SpineDataset
 from models.Unet_joint import unet_model
 from models.anxialnet import axial50l
 from models.U2net import U2NET
+
+
+
+
+
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 

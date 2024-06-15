@@ -7,14 +7,15 @@ import json
 
 
 class SpineDataset(Dataset):
-    def __init__(self,img_path,transform = None):
+    def __init__(self, directory, img_path, transform = None):
         self.transforms = transform
+        self.directory = directory
         self.img_path = img_path
     def __len__(self):
         return len(self.img_path)
     def __getitem__(self,index):
-        img = np.array(Image.open(f"./dataset_json_refilt/{self.img_path[index]}/img.png"))
-        mask = np.array(Image.open(f"./dataset_json_refilt/{self.img_path[index]}/label.png"))
+        img = np.array(Image.open(f"{self.directory}/{self.img_path[index]}/img.png"))
+        mask = np.array(Image.open(f"{self.directory}/{self.img_path[index]}/label.png"))
         # with open("qualified.json") as f :
         #     qualified = json.load(f)
         if self.transforms is not None:
