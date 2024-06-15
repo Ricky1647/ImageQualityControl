@@ -20,16 +20,18 @@ from models.Unet import AutoEncoder
 from models.anxialnet import axial50l
 from models.U2net import U2NET
 import sys
-gpu_index = sys.argv[1]
-DEVICE = f"cuda:{gpu_index}" if torch.cuda.is_available() else "cpu"
+
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("-i", "--train", help = "the input file for training")
-parser.add_argument("-g", "--test", help = "the input  file for testing")
+parser.add_argument("-t", "--test", help = "the input  file for testing")
 parser.add_argument("-d", "--directory", help = "the directory to store checkpoint")
 parser.add_argument("-c", "--channel", type = int, help = "the unet channel for different dataset")
-args = parser.parse_args()
+parser.add_argument("-n", "--gpu", type = int, help = "the gpu index")
 
+args = parser.parse_args()
+gpu_index = args.gpu
+DEVICE = f"cuda:{gpu_index}" if torch.cuda.is_available() else "cpu"
 def test(model, test_loader, device=DEVICE):
     model.eval()
     iou_score = 0.0
@@ -145,8 +147,8 @@ if __name__ == "__main__":
 
     testing_data = SpineDataset("./dataset",test_path,t1)
 
-    train_batch = DataLoader(train_set, batch_size=6, shuffle=True,num_workers=8)
-    test_batch = DataLoader(testing_data,batch_size=6,shuffle=True,num_workers=8)
+    train_batch = DataLoader(train_set, batch_size=10, shuffle=True,num_workers=32)
+    test_batch = DataLoader(testing_data,batch_size=10,shuffle=True,num_workers=32)
 
     model = unet_model(out_channels = args.channel).to(DEVICE)
     #model = axial50l().to(DEVICE)
@@ -203,7 +205,7 @@ if __name__ == "__main__":
         if acc > best_acc:
             best_acc = acc
             print("Saving best model... Best Acc is: {:.4f}".format(best_acc))
-            torch.save(model.state_dict(), f"{args.directory}/best_resnetlarge.ckpt")
+            torch.save(model.state_dict(), f"./checkpoint/{args.directory}/best_resnetlarge.ckpt")
             if acc>0.95:
-                torch.save(model.state_dict(), f"{args.directory}/{acc}_best_resnetlarge_{acc}.ckpt")
-        torch.save(optimizer.state_dict(), f"{args.directory}/optimizer.ckpt")
+                torch.save(model.state_dict(), f"./checkpoint/{args.directory}/{acc}_best_resnetlarge_{acc}.ckpt")
+        torch.save(optimizer.state_dict(), f"./checkpoint/{args.directory}/optimizer.ckpt")
