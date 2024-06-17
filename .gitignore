@@ -1,3 +1,4 @@
 checkpoint/*
 models/__pycache__/*
 dataset*
+result/*
